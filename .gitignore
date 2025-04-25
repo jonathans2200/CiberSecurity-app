@@ -1,0 +1,65 @@
+# Ignore environment files
+.env
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.sqlite3
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+logs/
+*.log
+
+# Compiled source #
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Mac OS
+.DS_Store
+
+# VSCode settings
+.vscode/
+
+# Virtualenv
+venv/
+.venv/
+
+# Docker
+*.pid
+docker-compose.override.yml
+
+# Coverage reports
+htmlcov/
+.coverage
+coverage.xml
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Auth0 local cache
+.auth0/
+
+# Database local files
+*.db
+
+# Temporary files
+tmp/
+temp/
+*.swp
