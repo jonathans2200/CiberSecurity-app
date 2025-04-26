@@ -1,0 +1,26 @@
+# .snyk - Archivo de configuración de políticas de Snyk
+version: v1.25.0
+ignore:
+  # Ignora vulnerabilidades específicas evaluadas y determinadas que no aplican
+  'SNYK-PYTHON-AIOHTTP-1079232':
+    - '*':
+        reason: 'Mitigado mediante el uso de versión actualizada de aiohttp en requirements.txt'
+        expires: 2025-07-01T00:00:00.000Z
+
+# Archivos y directorios a excluir del análisis
+exclude:
+  global:
+    - venv/
+    - __pycache__/
+    - '*.pyc'
+  
+  code:
+    - 'README.md'
+    - 'Docker-compose.yml'  # Se analizará por separado con Docker scanning
+
+# Configuraciones específicas por tipo de análisis
+policy-engine:
+  python:
+    severity-threshold: high  # Solo fallar en vulnerabilidades altas y críticas
+  dockerfile: 
+    severity-threshold: medium  # Más estricto con el Dockerfile
