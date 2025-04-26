@@ -93,7 +93,11 @@ async def analyze(type:str, value:Optional[str]=Query(None, description="IP o UR
     
     
     
-    return {"virustotal_report": vt_response}
+    return {
+        "type": type,
+        "value": value,
+        "openai_response":report,
+        "virustotal_report": vt_response}
 
 
 
