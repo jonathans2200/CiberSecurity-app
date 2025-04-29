@@ -6,6 +6,7 @@ from config.openai_client import generate_report
 from entity.Log import save_log_async
 from config.auth import get_current_user
 import asyncio
+import aiohttp
 from entity.Log import Log
 from config.db import SessionLocal, engine, Base
 from datetime import datetime
@@ -107,3 +108,26 @@ def protected_route(user: dict = Depends(get_current_user)):
         "message": "Token válido",
         "user": user
     }
+
+
+@app.post("/advanced-analysis")
+async def advanced_analysis(payload: dict):
+    """Recibe un payload con la URL a analizar.
+
+    Args:
+        payload: json={"value": "url_a_analizar"}
+    """
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+            "http://fastapi:8000/analyze",
+            headers=headers,
+            json=payload
+        ) as resp:
+            response = await resp.json()
+            print(response)
+            return response
+
