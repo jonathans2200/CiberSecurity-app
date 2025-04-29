@@ -13,8 +13,17 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 Base.metadata.create_all(bind=engine)
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware 
 load_dotenv() 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Solo tu frontend
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def get_db():
     db = SessionLocal()
