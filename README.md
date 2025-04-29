@@ -94,6 +94,8 @@ A web application designed for cybersecurity analysis, allowing authenticated us
         * WhoisXMLAPI API Key:
         WHOIS_API_KEY=your-WhoisXMLAPI-here
 
+        **For the root, .env is necessary, leave it blank.**
+
     *   **Backend (VirusTotal Service):**
         *   Create `Backend/.env`
         *   Populate `Backend/.env`
