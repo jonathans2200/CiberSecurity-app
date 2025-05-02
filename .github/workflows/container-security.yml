@@ -11,6 +11,7 @@ on:
     branches: [ main ]
   schedule:
     - cron: '0 2 * * 1'  # Cada lunes a las 2am
+  workflow_dispatch:
 
 jobs:
   snyk-container-security:
