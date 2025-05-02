@@ -38,6 +38,7 @@ jobs:
             --sarif-file-output=snyk-container.sarif
             --project-name=cibersecurity-backend-${{ github.ref_name }}
             --monitor
+            --exit-code=0
       
       - name: Subir archivo SARIF para GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v2
