@@ -114,6 +114,7 @@
                       value="url" 
                       class="custom-tab"
                       :class="{'active-tab': tab === 'url'}"
+                      bg-color="white"
                     >
                       <v-icon icon="mdi-link-variant" class="mr-2"></v-icon>
                       URL
@@ -225,7 +226,7 @@
                           placeholder="https://ejemplo.com"
                           variant="outlined"
                           density="comfortable"
-                          bg-color="primary-darken-2"
+                          bg-color="white"
                           color="primary"
                           hide-details
                           class="rounded-lg mb-2"
@@ -245,7 +246,7 @@
                           placeholder="192.168.1.1"
                           variant="outlined"
                           density="comfortable"
-                          bg-color="primary-darken-2"
+                          bg-color="white"
                           color="primary"
                           hide-details
                           class="rounded-lg mb-2"
@@ -268,6 +269,7 @@
                     height="56"
                     class="scan-button"
                     variant="elevated"
+                    outlined
                   >
                     <v-icon v-if="!isScanning" icon="mdi-magnify" class="mr-2"></v-icon>
                     <span v-if="!isScanning">Iniciar escaneo</span>
@@ -287,18 +289,34 @@
         </v-col>
       </v-row>
     </v-container>
+    
+    <!-- Sección de reporte con v-if para mostrar solo cuando hay datos -->
+    <v-container v-if="dataReport" class="mt-6">
+      <v-card class="rounded-xl overflow-hidden" elevation="5">
+        <v-card-title class="bg-primary text-white py-4">
+          <v-icon icon="mdi-file-document-outline" class="mr-2"></v-icon>
+          Reporte de Análisis de Seguridad
+        </v-card-title>
+        <v-card-text class="pa-4">
+          <MarkdownViewer :markdown="dataReport" />
+        </v-card-text>
+      </v-card>
+    </v-container>
   </v-app>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useAuth0 } from '@auth0/auth0-vue';
+import axiosInstance from '@/services/axiosInstance';  
+import MarkdownViewer from '@/components/MarkdownViewer.vue';
 
 const tab = ref('file');
 const file = ref(null);
 const url = ref('');
 const ip = ref('');
 const isScanning = ref(false);
+const dataReport = ref(''); // Importante usar ref() para la variable dataReport
 const scanComplete = ref(false);
 const threatLevel = ref(0);
 const fileInput = ref(null);
@@ -312,16 +330,15 @@ onMounted(async () => {
   if (isAuthenticated.value) {
     try {
       const { id_token } = await getAccessTokenSilently({ detailedResponse: true });
-      console.log("ID Token:", id_token); // Aquí tienes tu ID token
+      console.log("ID Token:", id_token); 
 
       // Decodificar el token para obtener los roles
       const tokenPayload = parseJwt(id_token);
       console.log("Token decodificado:", tokenPayload);
 
       // Extraer roles - ajusta la ruta según la estructura de tu token
-      // Generalmente Auth0 almacena roles en una propiedad como 'roles' o 'https://tu-dominio/roles'
       userRoles.value = tokenPayload.roles ||
-                        tokenPayload['https://dev-mk00wdmgz5nn6d2c.us.auth0.com/roles'] ||
+                        tokenPayload['https://securityApp.com/roles'] ||
                         [];
 
       console.log("Roles del usuario:", userRoles.value);
@@ -393,50 +410,47 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-const readFileAsBytes = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = (event) => {
-      const arrayBuffer = event.target.result;
-      const uint8Array = new Uint8Array(arrayBuffer);
-      resolve(uint8Array);
-    };
-
-    reader.onerror = (error) => {
-      reject(error);
-    };
-
-    reader.readAsArrayBuffer(file);
-  });
-};
-
 const startScan = async () => {
   isScanning.value = true;
-
+  console.log("Iniciando escaneo de tipo:", tab.value);
+  
   try {
-    let fileBytes = null;
-
     if (tab.value === 'file' && file.value) {
-      fileBytes = await readFileAsBytes(file.value);
-      console.log('Contenido del archivo en bytes:', fileBytes);
+      const formData = new FormData();
+      formData.append('file', file.value);
+
+      const response = await axiosInstance.post('analyze?type=file', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      // Actualizar la ref correctamente
+      if (response.data && response.data.openai_response) {
+        dataReport.value = response.data.openai_response;
+        console.log('Markdown recibido:', dataReport.value);
+      } else {
+        console.error('No se recibió respuesta de análisis');
+      }
     }
 
-    // Simulación de escaneo
+    // Simulación de escaneo y actualización de estado
     setTimeout(() => {
       isScanning.value = false;
       scanComplete.value = true;
       threatLevel.value = Math.floor(Math.random() * 3);
     }, 2000);
   } catch (error) {
-    console.error('Error leyendo el archivo:', error);
+    console.error('Error durante el análisis:', error);
     isScanning.value = false;
+    // Opcional: Mostrar mensaje de error al usuario
   }
 };
 
 const resetScan = () => {
   scanComplete.value = false;
   threatLevel.value = 0;
+  dataReport.value = ''; // Limpiar el reporte al reiniciar
   if (tab.value === 'file') file.value = null;
   else if (tab.value === 'url') url.value = '';
   else if (tab.value === 'ip') ip.value = '';
@@ -485,6 +499,7 @@ const resetScan = () => {
   font-weight: 500 !important;
   letter-spacing: 0.5px;
   transition: all 0.3s ease;
+  color: white !important;
 }
 
 .active-tab {
