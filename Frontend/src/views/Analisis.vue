@@ -77,14 +77,6 @@
                               </span>
                             </v-list-item-title>
                           </v-list-item>
-                          <v-list-item>
-                            <v-list-item-title class="d-flex justify-space-between">
-                              <span class="text-blue-lighten-3">Amenazas encontradas:</span>
-                              <span class="text-white font-weight-medium">
-                                {{ threatLevel === 0 ? '0' : threatLevel === 1 ? '2' : '7' }}
-                              </span>
-                            </v-list-item-title>
-                          </v-list-item>
                         </v-list>
                       </v-card-text>
                     </v-card>
@@ -308,7 +300,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useAuth0 } from '@auth0/auth0-vue';
-import axiosInstance from '@/services/axiosInstance';  
+import axiosInstance from '@/services/axiosInstance';
 import MarkdownViewer from '@/components/MarkdownViewer.vue';
 
 const tab = ref('file');
@@ -316,14 +308,13 @@ const file = ref(null);
 const url = ref('');
 const ip = ref('');
 const isScanning = ref(false);
-const dataReport = ref(''); // Importante usar ref() para la variable dataReport
+const dataReport = ref('');
 const scanComplete = ref(false);
 const threatLevel = ref(0);
 const fileInput = ref(null);
 const isDragging = ref(false);
 
 const { getAccessTokenSilently, isAuthenticated } = useAuth0();
-
 const userRoles = ref([]);
 
 onMounted(async () => {
@@ -348,7 +339,6 @@ onMounted(async () => {
   }
 });
 
-// Función para decodificar JWT sin dependencias externas
 const parseJwt = (token) => {
   try {
     const base64Url = token.split('.')[1];
@@ -370,9 +360,7 @@ const features = [
 ];
 
 const threatColors = [
-  { color: 'success', icon: 'mdi-check-circle', text: 'No se detectaron amenazas' },
-  { color: 'warning', icon: 'mdi-alert-circle', text: 'Se detectaron posibles riesgos' },
-  { color: 'error', icon: 'mdi-alert', text: 'Se detectaron amenazas graves' },
+  { color: 'info', icon: 'mdi-information', text: 'Se obtuvo los siguientes resultados' }
 ];
 
 const canScan = computed(() => {
@@ -383,7 +371,7 @@ const canScan = computed(() => {
 });
 
 const scanTarget = computed(() => {
-  if (tab.value === 'file') return file.value ? file.value.name : 'N/A';
+  if (tab.value === 'file') return file.value?.name || 'N/A';
   if (tab.value === 'url') return url.value || 'N/A';
   if (tab.value === 'ip') return ip.value || 'N/A';
   return 'N/A';
@@ -410,50 +398,70 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
+const isValidUrl = (value) => {
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const isValidIp = (value) => {
+  const ipPattern = /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/;
+  return ipPattern.test(value);
+};
+
+const determineThreatLevel = (response) => {
+  const score = response.threat_score || 0;
+  if (score < 3) return 0;
+  if (score < 6) return 1;
+  return 2;
+};
+
 const startScan = async () => {
   isScanning.value = true;
-  console.log("Iniciando escaneo de tipo:", tab.value);
-  
   try {
+    let response;
+
     if (tab.value === 'file' && file.value) {
       const formData = new FormData();
       formData.append('file', file.value);
-
-      const response = await axiosInstance.post('analyze?type=file', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      response = await axiosInstance.post('analyze?type=file', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-      
-      // Actualizar la ref correctamente
-      if (response.data && response.data.openai_response) {
-        dataReport.value = response.data.openai_response;
-        console.log('Markdown recibido:', dataReport.value);
-      } else {
-        console.error('No se recibió respuesta de análisis');
-      }
+    } else if (tab.value === 'url' && url.value) {
+      if (!isValidUrl(url.value)) throw new Error('URL inválida.');
+      response = await axiosInstance.post(`analyze?type=url&value=${encodeURIComponent(url.value)}`);
+    } else if (tab.value === 'ip' && ip.value) {
+      if (!isValidIp(ip.value)) throw new Error('IP inválida.');
+      response = await axiosInstance.post(`analyze?type=ip&value=${encodeURIComponent(ip.value)}`);
+    } else {
+      throw new Error('Configuración de escaneo inválida.');
     }
 
-    // Simulación de escaneo y actualización de estado
-    setTimeout(() => {
-      isScanning.value = false;
+    if (response.data?.openai_response) {
+      dataReport.value = response.data.openai_response;
+      threatLevel.value = determineThreatLevel(response.data);
       scanComplete.value = true;
-      threatLevel.value = Math.floor(Math.random() * 3);
-    }, 2000);
+    } else {
+      throw new Error('Respuesta de análisis inválida.');
+    }
+
   } catch (error) {
-    console.error('Error durante el análisis:', error);
+    console.error("Error en el escaneo:", error);
+  } finally {
     isScanning.value = false;
-    // Opcional: Mostrar mensaje de error al usuario
   }
 };
 
 const resetScan = () => {
+  file.value = null;
+  url.value = '';
+  ip.value = '';
+  dataReport.value = '';
   scanComplete.value = false;
   threatLevel.value = 0;
-  dataReport.value = ''; // Limpiar el reporte al reiniciar
-  if (tab.value === 'file') file.value = null;
-  else if (tab.value === 'url') url.value = '';
-  else if (tab.value === 'ip') ip.value = '';
 };
 </script>
 

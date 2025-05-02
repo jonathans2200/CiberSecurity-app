@@ -1,36 +1,19 @@
-FROM node:16-alpine as build
+FROM node:20-alpine
 
-RUN apk update && apk upgrade && \
-  apk add --no-cache bash git openssh
-
-RUN mkdir /app
-
+# Crear directorio de la aplicación
 WORKDIR /app
 
-COPY package.json .
+# Copiar archivos de configuración y dependencias
+COPY package*.json ./
 
+# Instalar dependencias
 RUN npm install
 
+# Copiar el código fuente
 COPY . .
 
-RUN npm run build
-
-# ---------------
-
-FROM node:16-alpine
-
-RUN mkdir -p /app/dist
-
-WORKDIR /app
-
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/package.json .
-COPY --from=build /app/web-server.js .
-
-ENV NODE_ENV production
-
-RUN npm install --production
-
+# Exponer puerto 3000
 EXPOSE 3000
 
-CMD ["node", "web-server.js"]
+# Comando para iniciar la aplicación en puerto 3000
+CMD ["npx", "vite", "--port", "3000", "--host", "0.0.0.0"]
