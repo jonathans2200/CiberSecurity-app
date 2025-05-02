@@ -1,0 +1,36 @@
+name: Container Security Scan
+
+on:
+  push:
+    branches: [ main, imp-snyk ]
+    paths:
+      - 'Dockerfile'
+      - 'requirements.txt'
+      - 'Docker-compose.yml'
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 2 * * 1'  # Cada lunes a las 2am
+
+jobs:
+  snyk-container-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Build Docker image
+        run: docker build -t fastapi-vt:${{ github.sha }} .
+      
+      - name: Run Snyk Container Test
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: fastapi-vt:${{ github.sha }}
+          args: --file=Dockerfile --severity-threshold=medium --sarif-file-output=snyk-container.sarif
+      
+      - name: Upload SARIF file for GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: snyk-container.sarif
