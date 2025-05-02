@@ -34,7 +34,7 @@ jobs:
           image: fastapi-vt:${{ github.sha }}
           args: >
             --file=Backend/Dockerfile
-            --severity-threshold=medium
+            --severity-threshold=low
             --sarif-file-output=snyk-container.sarif
             --project-name=cibersecurity-backend-${{ github.ref_name }}
             --monitor
