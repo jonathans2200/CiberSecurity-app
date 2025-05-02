@@ -32,7 +32,12 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           image: fastapi-vt:${{ github.sha }}
-          args: --file=Backend/Dockerfile --severity-threshold=medium --sarif-file-output=snyk-container.sarif
+          args: >
+            --file=Backend/Dockerfile
+            --severity-threshold=medium
+            --sarif-file-output=snyk-container.sarif
+            --project-name=cibersecurity-backend-${{ github.ref_name }}
+            --monitor
       
       - name: Subir archivo SARIF para GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v2
