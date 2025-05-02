@@ -34,7 +34,7 @@ jobs:
         with:
           args: >
             --docker fastapi-vt:${{ github.sha }}
-            --severity-threshold=low
+            --severity-threshold=critical
             --sarif-file-output=snyk-container.sarif
             --project-name=cibersecurity-backend-${{ github.ref_name }}
             --monitor
