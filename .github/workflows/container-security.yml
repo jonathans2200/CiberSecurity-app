@@ -43,6 +43,7 @@ jobs:
             --monitor
             --exit-code=0
             --exclude-base-image-vulns
+            --policy-path=.snyk
       
       - name: Subir archivo SARIF para GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v2
