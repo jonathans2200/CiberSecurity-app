@@ -2,13 +2,10 @@
   <div class="navbar-wrapper">
     <nav class="navbar-modern">
       <div class="navbar-container">
-        <!-- Logo -->
         <div class="navbar-logo">
-          <!-- Puedes reemplazar esto con tu logo -->
           <div class="logo-placeholder"></div>
         </div>
 
-        <!-- Botón móvil -->
         <button
           class="menu-toggle"
           @click="isMenuOpen = !isMenuOpen"
@@ -17,10 +14,7 @@
         >
           <span class="menu-icon"></span>
         </button>
-
-        <!-- Contenido de la navegación -->
         <div class="navbar-content" :class="{ 'is-open': isMenuOpen }">
-          <!-- Enlaces de navegación -->
           <ul class="nav-links">
             <li class="nav-item">
               <router-link to="/" class="nav-link">Inicio</router-link>
@@ -28,12 +22,10 @@
             <li v-if="isAuthenticated" class="nav-item">
               <router-link to="/analisis" class="nav-link">Análisis</router-link>
             </li>
-            <li v-if="isAuthenticated" class="nav-item">
+            <li v-if="isAuthenticated && currentRole === 'UserPremium'" class="nav-item">
               <router-link to="/advancedAnalysis" class="nav-link">Análisis Avanzado</router-link>
             </li>
           </ul>
-
-          <!-- Área de autenticación (Desktop) -->
           <div class="auth-area">
             <button
               v-if="!isAuthenticated && !isLoading"
@@ -73,7 +65,6 @@
             </div>
           </div>
 
-          <!-- Área de autenticación (Móvil) -->
           <div class="mobile-auth" v-if="isMenuOpen">
             <button
               v-if="!isAuthenticated && !isLoading"
@@ -108,35 +99,75 @@
     </nav>
   </div>
 </template>
-
-<script lang="ts">
-import { ref } from 'vue';
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import { useAuth0 } from '@auth0/auth0-vue';
 
-export default {
-  name: "NavBar",
-  setup() {
-    const auth0 = useAuth0();
-    const isMenuOpen = ref(false);
-    
-    return {
-      isAuthenticated: auth0.isAuthenticated,
-      isLoading: auth0.isLoading,
-      user: auth0.user,
-      isMenuOpen,
-      login() {
-        auth0.loginWithRedirect();
-      },
-      logout() {
-        auth0.logout({
-          logoutParams: {
-            returnTo: window.location.origin
-          }
-        });
-      }
-    }
+const auth0 = useAuth0();
+
+const isMenuOpen = ref(false);
+const userRoles = ref<string[]>([]);
+const currentRole = ref<string | null>(null);
+
+const parseJwt = (token: string): Record<string, any> => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    console.error("Error al decodificar el token:", e);
+    return {};
   }
 };
+
+const fetchUserRoles = async () => {
+  try {
+    const { id_token } = await auth0.getAccessTokenSilently({ detailedResponse: true });
+    const tokenPayload = parseJwt(id_token);
+
+    const roles = tokenPayload.roles || tokenPayload['https://securityApp.com/roles'] || [];
+
+    userRoles.value = roles;
+    currentRole.value = roles.length > 0 ? roles[0] : null;
+
+    console.log("Roles del usuario:", userRoles.value);
+    console.log("Rol actual del usuario:", currentRole.value);
+  } catch (err) {
+    console.error("Error al obtener el ID token:", err);
+  }
+};
+
+watch(auth0.isAuthenticated, (newValue) => {
+  if (newValue) {
+    fetchUserRoles();
+  }
+});
+
+if (auth0.isAuthenticated.value) {
+  fetchUserRoles();
+}
+
+const login = () => {
+  auth0.loginWithRedirect();
+};
+
+const logout = () => {
+  auth0.logout({
+    logoutParams: {
+      returnTo: window.location.origin
+    }
+  });
+};
+
+const isAuthenticated = auth0.isAuthenticated;
+const isLoading = auth0.isLoading;
+const user = auth0.user;
 </script>
 
 <style>
@@ -175,7 +206,6 @@ export default {
   border-radius: 8px;
 }
 
-/* Menu toggle para móvil */
 .menu-toggle {
   display: none;
   background: transparent;
@@ -213,7 +243,6 @@ export default {
   transform: translateY(8px);
 }
 
-/* Animación del menú */
 .menu-toggle.active .menu-icon {
   background-color: transparent;
 }
@@ -226,7 +255,6 @@ export default {
   transform: translateY(0) rotate(-45deg);
 }
 
-/* Contenido principal de navbar */
 .navbar-content {
   display: flex;
   align-items: center;
@@ -234,7 +262,6 @@ export default {
   justify-content: space-between;
 }
 
-/* Enlaces de navegación */
 .nav-links {
   display: flex;
   list-style: none;
@@ -279,7 +306,6 @@ export default {
   color: #3498db;
 }
 
-/* Área de autenticación */
 .auth-area {
   display: flex;
   align-items: center;
@@ -302,7 +328,6 @@ export default {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Dropdown del perfil */
 .profile-dropdown {
   position: relative;
 }
@@ -337,7 +362,6 @@ export default {
   border-top: 5px solid #333;
 }
 
-/* Estilos del dropdown compatibles con Bootstrap */
 .dropdown-menu {
   position: absolute;
   top: 100%;
@@ -391,7 +415,6 @@ export default {
   margin-right: 0.75rem;
 }
 
-/* Estilos para móvil */
 @media (max-width: 768px) {
   .menu-toggle {
     display: block;
