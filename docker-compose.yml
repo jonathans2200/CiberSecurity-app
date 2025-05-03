@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   api:
+    hostname: api
     build:
       context: ./Backend
       dockerfile: Dockerfile
@@ -82,10 +83,9 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./:/app
       - /app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:8002/api  # Si tienes un backend en otro contenedor
+      - VITE_API_URL=http://kong:8000/api  # Si tienes un backend en otro contenedor
     command: ["npm", "run", "serve"]
   
   adminer:
