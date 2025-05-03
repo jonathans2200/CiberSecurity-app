@@ -7,9 +7,9 @@ on:
       - 'Backend/Dockerfile'
       - 'Backend/requirements.txt'
       - 'docker-compose.yml'
-      - 'mcp-client/Dockerfile'
-      - 'mcp-client/requirements.txt'
-      - 'mcp-server/requirements.txt'
+      # - 'mcp-client/Dockerfile'
+      # - 'mcp-client/requirements.txt'
+      # - 'mcp-server/requirements.txt'
   pull_request:
     branches: [ main ]
   schedule:
