@@ -85,7 +85,7 @@ services:
     volumes:
       - /app/node_modules
     environment:
-      - VITE_API_URL=http://kong:8000/api  # Si tienes un backend en otro contenedor
+      - VITE_API_URL=http://localhost:8002/api  # Si tienes un backend en otro contenedor
     command: ["npm", "run", "serve"]
   
   adminer:
