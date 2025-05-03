@@ -2,10 +2,10 @@
 version: v1.25.0
 ignore:
   # Ignora vulnerabilidades específicas evaluadas y determinadas que no aplican
-  'SNYK-PYTHON-AIOHTTP-1079232':
-    - '*':
-        reason: 'Mitigado mediante el uso de versión actualizada de aiohttp en requirements.txt'
-        expires: 2025-07-01T00:00:00.000Z
+  # 'SNYK-PYTHON-AIOHTTP-1079232':
+  #   - '*':
+  #       reason: 'Mitigado mediante el uso de versión actualizada de aiohttp en requirements.txt'
+  #       expires: 2025-07-01T00:00:00.000Z
   'SNYK-DEBIAN12-ZLIB-6008963':
     - '*':
         reason: 'Vulnerabilidad en la imagen base que no afecta a la funcionalidad de la aplicación'
