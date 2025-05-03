@@ -4,6 +4,10 @@ FROM python:3.13.3-slim
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
+RUN apt-get update && \
+    apt-get upgrade -y zlib1g && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Establecer el directorio de trabajo dentro del contenedor
 WORKDIR /app
