@@ -1,10 +1,10 @@
 _format_version: "2.1"
 
 services:
-  - name: fastapi-main
-    url: http://main-backend:8000       # match your FastAPI service’s name & port, Kong forwards requests here
+  - name: api
+    url: http://api:8000       # match your FastAPI service’s name & port, Kong forwards requests here
     routes:
-      - name: fastapi-main-route
+      - name: api-main-route
         paths:
           - /api                         # proxy anything under /api
         strip_path: false

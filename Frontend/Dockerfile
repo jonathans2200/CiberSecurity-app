@@ -1,5 +1,8 @@
 FROM node:16-alpine as build
 
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
 RUN apk update && apk upgrade && \
   apk add --no-cache bash git openssh
 

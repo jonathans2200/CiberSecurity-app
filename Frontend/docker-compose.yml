@@ -4,11 +4,13 @@ services:
   frontend:
     build:
       context: .
+      args:
+        - VITE_API_URL=HTTP://localhost:8002/api
     ports:
       - "3000:3000"
     volumes:
       - .:/app
       - /app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:8000  # Si tienes un backend en otro contenedor
+      - VITE_API_URL=http://localhost:8002/api  # Si tienes un backend en otro contenedor
     command: ["npm", "run", "serve"]
