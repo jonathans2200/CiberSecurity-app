@@ -4,9 +4,10 @@ from fastapi.encoders import jsonable_encoder
 from config.vt_client import analyze_ip, analyze_url, analyze_file
 from config.openai_client import generate_report
 from entity.Log import save_log_async
-from config.auth import get_current_user
+
 import asyncio
 import aiohttp
+from config.auth import require_roles
 from entity.Log import Log
 from config.db import SessionLocal, engine, Base
 from datetime import datetime
@@ -33,7 +34,7 @@ def get_db():
         db.close()
 
 @app.get("/logs")
-def get_logs(
+def get_logs(user= require_roles("SecurityOps"),
     type: Optional[str] = Query(None, description="Filtrar por tipo: ip, url, file"),
     fecha_inicio: Optional[datetime] = Query(None, description="Fecha desde (YYYY-MM-DD)"),
     fecha_fin: Optional[datetime] = Query(None, description="Fecha hasta (YYYY-MM-DD)"),
@@ -56,34 +57,11 @@ def get_logs(
 
 
 
-# @app.post("/analyze")
-# async def analyze(type:str, value:Optional[str]=Query(None, description="IP o URL a analizar"),file: Optional[UploadFile] = File(None)):
-#     vt_response = None
-
-#     if type == "url":
-#         vt_response = await analyze_url(value)
-       
-#     elif type == "ip":
-#         vt_response = await analyze_ip(value)
-#     elif type == "file":
-#         contents = await file.read()
-#         vt_response = await analyze_file(contents, file.filename)
-#         value= file.filename
-#     else:
-#         raise HTTPException(status_code=400, detail="Tipo no válido. Usa: url, ip o file")
-    
-#     report = await generate_report(vt_response)
-#     asyncio.create_task(save_log_async(type,value, vt_response, report))
-    
-    
-    
-#     return {"virustotal_report": vt_response}
-
 
 
 
 @app.post("/analyze")
-async def analyze(type:str, value:Optional[str]=Query(None, description="IP o URL a analizar"),file: Optional[UploadFile] = File(None)):
+async def analyze(type:Optional[str], value:Optional[str]=Query(None, description="IP o URL a analizar"),file: Optional[UploadFile] = File(None),user= require_roles("SecurityOps")):
     vt_response = None
 
     if type == "url":
@@ -111,16 +89,10 @@ async def analyze(type:str, value:Optional[str]=Query(None, description="IP o UR
 
 
 
-@app.get("/profile")
-def protected_route(user: dict = Depends(get_current_user)):
-    return {
-        "message": "Token válido",
-        "user": user
-    }
 
 
 @app.post("/advanced-analysis")
-async def advanced_analysis(payload: dict):
+async def advanced_analysis(payload: dict,user= require_roles("UserPremium")):
     """Recibe un payload con la URL a analizar.
 
     Args:
