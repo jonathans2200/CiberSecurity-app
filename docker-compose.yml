@@ -70,6 +70,23 @@ services:
       KONG_PROXY_ERROR_LOG: /dev/stderr
       KONG_ADMIN_ACCESS_LOG: /dev/stdout
       KONG_ADMIN_ERROR_LOG: /dev/stderr
+
+  app:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    depends_on:
+      - kong
+      - fastapi
+      - api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8002/api  # Si tienes un backend en otro contenedor
+    command: ["npm", "run", "serve"]
   
   adminer:
     image: adminer
