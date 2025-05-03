@@ -7,9 +7,9 @@ on:
       - 'Backend/Dockerfile'
       - 'Backend/requirements.txt'
       - 'docker-compose.yml'
-      - 'mcp-client/Dockerfile'
-      - 'mcp-client/requirements.txt'
-      - 'mcp-server/requirements.txt'
+      # - 'mcp-client/Dockerfile'
+      # - 'mcp-client/requirements.txt'
+      # - 'mcp-server/requirements.txt'
   pull_request:
     branches: [ main ]
   schedule:
@@ -20,12 +20,8 @@ jobs:
   snyk-container-security:
     runs-on: ubuntu-latest
     permissions:
-      # Necesario para cargar resultados SARIF
-      security-events: write
-      # Necesario para el checkout
-      contents: read
-      actions: read
-      pull-requests: read
+      security-events: write  # Permite escribir eventos de seguridad
+      contents: read         # Permiso para leer el contenido del repositorio
     
     defaults:
       run:
