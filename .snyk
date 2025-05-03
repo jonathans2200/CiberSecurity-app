@@ -6,6 +6,10 @@ ignore:
     - '*':
         reason: 'Mitigado mediante el uso de versión actualizada de aiohttp en requirements.txt'
         expires: 2025-07-01T00:00:00.000Z
+  'SNYK-DEBIAN12-ZLIB-6008963':
+    - '*':
+        reason: 'Vulnerabilidad en la imagen base que no afecta a la funcionalidad de la aplicación'
+        expires: 2025-12-31T00:00:00.000Z
 
 # Archivos y directorios a excluir del análisis
 exclude:
