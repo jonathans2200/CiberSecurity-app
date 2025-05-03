@@ -138,7 +138,6 @@ The main backend API endpoints are exposed via the **Kong Gateway** (`http://loc
 
 *   `/logs` (GET)
 *   `/analyze` (POST)
-*   `/profile` (GET)
 *   `/advanced-analysis` (POST)
 
 *(Authentication using JWT Bearer tokens obtained via Auth0 is not yet implemented)*
