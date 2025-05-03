@@ -76,7 +76,7 @@ A web application designed for cybersecurity analysis, allowing authenticated us
         * VirusTotal API Key: 
         VT_KEY=your-virustotal-api-key-here
         * Database connection URL:
-        DATABASE_URL=postgresql://postgres:postgres@db:5432/virustotaldb
+        DATABASE_URL_API=postgresql://postgres:postgres@db:5432/virustotaldb
         * Auth0 Client ID: 
         AUTH0_CLIENT_ID=your-auth0-client-id-here
         * Auth0 Domain:
