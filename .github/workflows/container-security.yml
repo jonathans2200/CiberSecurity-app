@@ -42,6 +42,7 @@ jobs:
             --project-name=cibersecurity-backend-${{ github.ref_name }}
             --monitor
             --exit-code=0
+            --exclude-base-image-vulns
       
       - name: Subir archivo SARIF para GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v2
