@@ -9,4 +9,5 @@ services:
       - ./:/app
       - /app/node_modules
     environment:
-      - HOST=0.0.0.0
+      - VITE_API_URL=http://localhost:8002/api  # Si tienes un backend en otro contenedor
+    command: ["npm", "run", "serve"]
