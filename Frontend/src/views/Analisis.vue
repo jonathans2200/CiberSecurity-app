@@ -320,22 +320,27 @@ const userRoles = ref([]);
 onMounted(async () => {
   if (isAuthenticated.value) {
     try {
-      const { id_token } = await getAccessTokenSilently({ detailedResponse: true });
-      console.log("ID Token:", id_token); 
+    // Solicita tokens detallados
+      const { id_token, access_token } = await getAccessTokenSilently({ detailedResponse: true });
 
-      // Decodificar el token para obtener los roles
+      // Guarda el access_token en localStorage para futuras peticiones
+      localStorage.setItem('access_token', access_token);
+      console.log("Access Token guardado:", access_token);
+
+      // Decodifica el id_token para obtener información del usuario
       const tokenPayload = parseJwt(id_token);
       console.log("Token decodificado:", tokenPayload);
 
-      // Extraer roles - ajusta la ruta según la estructura de tu token
+      // Extraer roles del payload (ajusta la ruta según cómo esté configurado en Auth0)
       userRoles.value = tokenPayload.roles ||
                         tokenPayload['https://securityApp.com/roles'] ||
                         [];
 
       console.log("Roles del usuario:", userRoles.value);
     } catch (err) {
-      console.error("Error al obtener el ID token:", err);
+      console.error("Error al obtener tokens:", err);
     }
+
   }
 });
 
