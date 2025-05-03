@@ -57,29 +57,6 @@ def get_logs(user= require_roles("SecurityOps"),
 
 
 
-# @app.post("/analyze")
-# async def analyze(type:str, value:Optional[str]=Query(None, description="IP o URL a analizar"),file: Optional[UploadFile] = File(None)):
-#     vt_response = None
-
-#     if type == "url":
-#         vt_response = await analyze_url(value)
-       
-#     elif type == "ip":
-#         vt_response = await analyze_ip(value)
-#     elif type == "file":
-#         contents = await file.read()
-#         vt_response = await analyze_file(contents, file.filename)
-#         value= file.filename
-#     else:
-#         raise HTTPException(status_code=400, detail="Tipo no válido. Usa: url, ip o file")
-    
-#     report = await generate_report(vt_response)
-#     asyncio.create_task(save_log_async(type,value, vt_response, report))
-    
-    
-    
-#     return {"virustotal_report": vt_response}
-
 
 
 
