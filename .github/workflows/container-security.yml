@@ -19,9 +19,7 @@ on:
 jobs:
   snyk-container-security:
     runs-on: ubuntu-latest
-    permissions:
-      security-events: write  # Permite escribir eventos de seguridad
-      contents: read         # Permiso para leer el contenido del repositorio
+    
     defaults:
       run:
         working-directory: Backend  # Establece el directorio de trabajo predeterminado
