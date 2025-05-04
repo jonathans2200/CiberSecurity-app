@@ -261,11 +261,8 @@
 import axiosInstance from '@/services/axiosInstance';
 import { ref, computed } from 'vue';
 import MarkdownViewer from '@/components/MarkdownViewer.vue';
-<<<<<<< HEAD
 import axiosInstance from '@/services/axiosInstance';
-=======
 import axios from 'axios';
->>>>>>> main
 
 const url = ref('');
 const urlError = ref('');
@@ -273,10 +270,7 @@ const isScanning = ref(false);
 const scanComplete = ref(false);
 const threatLevel = ref(0);
 const dataReport = ref('');
-<<<<<<< HEAD
-=======
 const pdfBase64 = ref('');
->>>>>>> main
 
 const features = [
   { icon: 'mdi-web-check', text: 'Detección avanzada de phishing y estafas' },
@@ -414,7 +408,7 @@ const downloadPdf = () => {
   }
 };
 
-const startScan = async () => {
+const startScan1 = async () => {
   if (!canScan.value) return ;
 
   isScanning.value = true;
@@ -460,13 +454,10 @@ const resetScan = () => {
   pdfBase64.value = ''; 
   scanComplete.value = false;
   threatLevel.value = 0;
-<<<<<<< HEAD
   url.value = '';
   urlError.value = '';
   dataReport.value = '';
-=======
   isScanning.value = false; 
->>>>>>> main
 };
 
 </script>
