@@ -12,7 +12,8 @@ const baseURL = import.meta.env.VITE_API_URL
 
 const axiosInstance = axios.create({
   baseURL,
-  headers: { Accept: 'application/json' },
+  headers: { Accept: 'application/json',
+             Authorization: `BEARER ${localStorage.getItem('access_token')}` },
 })
 
 export default axiosInstance;
