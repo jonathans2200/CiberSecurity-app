@@ -215,16 +215,30 @@
       </v-row>
     </v-container>
   </v-app>
+  <v-container v-if="dataReport" class="mt-6">
+      <v-card class="rounded-xl overflow-hidden" elevation="5">
+        <v-card-title class="bg-primary text-white py-4">
+          <v-icon icon="mdi-file-document-outline" class="mr-2"></v-icon>
+          Reporte de Análisis de Seguridad
+        </v-card-title>
+        <v-card-text class="pa-4">
+          <MarkdownViewer :markdown="dataReport" />
+        </v-card-text>
+      </v-card>
+    </v-container>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
+import MarkdownViewer from '@/components/MarkdownViewer.vue';
+import axiosInstance from '@/services/axiosInstance';
 
 const url = ref('');
 const urlError = ref('');
 const isScanning = ref(false);
 const scanComplete = ref(false);
 const threatLevel = ref(0);
+const dataReport = ref('');
 
 const features = [
   { icon: 'mdi-web-check', text: 'Detección avanzada de phishing y estafas' },
@@ -289,16 +303,45 @@ const validateUrl = () => {
   }
 };
 
-const startScan = () => {
+const startScan = async () => {
   isScanning.value = true;
-  
-  // Simulación de escaneo
-  setTimeout(() => {
+  errorMessage.value = ''; // Limpiar mensajes de error anteriores
+
+  try {
+    if (!url.value || !url.value.trim()) {
+      errorMessage.value = 'Por favor, ingresa una URL válida';
+      return;
+    }
+
+    const payload = {
+      type: 'url',
+      value: url.value.trim()
+    };
+    console.log('Enviando payload:', payload);
+    
+    const response = await axiosInstance.post('/advanced-analysis', payload);
+    console.log('Respuesta del escaneo:', response.data);
+    
+    if (response.data?.openai_response) {
+      dataReport.value = response.data.openai_response;
+      threatLevel.value = determineThreatLevel(response.data);
+      scanComplete.value = true;
+    } else {
+      throw new Error('Respuesta de análisis inválida.');
+    }
+  } catch (error) {
+    console.error('Error en el escaneo avanzado:', error);
+    
+    if (error.response) {
+      errorMessage.value = `Error del servidor: ${error.response.status} - ${error.response.data?.detail || 'Error desconocido'}`;
+    } else if (error.request) {
+      errorMessage.value = 'No se pudo conectar con el servidor. Verifica tu conexión o inténtalo más tarde.';
+    } else {
+      errorMessage.value = `Error: ${error.message}`;
+    }
+  } finally {
     isScanning.value = false;
-    scanComplete.value = true;
-    // Generamos un resultado aleatorio para demostración
-    threatLevel.value = Math.floor(Math.random() * 3);
-  }, 3000);
+  }
 };
 
 const resetScan = () => {
@@ -306,6 +349,7 @@ const resetScan = () => {
   threatLevel.value = 0;
   url.value = '';
   urlError.value = '';
+  dataReport.value = '';
 };
 </script>
 
