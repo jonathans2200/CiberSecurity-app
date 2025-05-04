@@ -59,12 +59,12 @@
               <v-col cols="12" md="7" class="pa-8 bg-dark">
                 <div v-if="scanComplete">
                   <div class="d-flex flex-column align-center py-4">
-                    <v-avatar :color="threatColors[threatLevel].color" size="96" class="mb-6">
-                      <v-icon :icon="threatColors[threatLevel].icon" size="x-large" color="white"></v-icon>
+                    <v-avatar color="primary" size="96" class="mb-6">
+                      <v-icon icon="mdi-check-circle" size="x-large" color="white"></v-icon>
                     </v-avatar>
 
                     <h2 class="text-h4 font-weight-bold text-white mb-6">
-                      {{ threatColors[threatLevel].text }}
+                      Análisis Completado
                     </h2>
 
                     <v-card class="w-100 mb-6 rounded-lg" color="primary-darken-1" elevation="0">
@@ -87,40 +87,9 @@
                               </span>
                             </v-list-item-title>
                           </v-list-item>
-                          <v-list-item>
-                            <v-list-item-title class="d-flex justify-space-between">
-                              <span class="text-blue-lighten-3">Nivel de riesgo:</span>
-                              <span :class="`text-${threatColors[threatLevel].color} font-weight-medium`">
-                                {{ threatLevel === 0 ? 'Bajo' : threatLevel === 1 ? 'Medio' : 'Alto' }}
-                              </span>
-                            </v-list-item-title>
-                          </v-list-item>
                         </v-list>
                       </v-card-text>
                     </v-card>
-                    
-                    <v-expand-transition>
-                      <v-card v-if="threatLevel > 0" class="w-100 mb-6 rounded-lg" color="surface-variant" variant="outlined">
-                        <v-card-text>
-                          <div class="d-flex align-center mb-3">
-                            <v-icon :icon="threatLevel === 1 ? 'mdi-alert-circle' : 'mdi-alert'" 
-                                   :color="threatLevel === 1 ? 'warning' : 'error'" 
-                                   class="mr-2"></v-icon>
-                            <span class="text-subtitle-1 font-weight-medium">Detalles de amenazas</span>
-                          </div>
-                          <v-list bg-color="transparent" class="pa-0">
-                            <v-list-item v-for="(threat, i) in threatDetails[threatLevel]" :key="i" class="px-0 py-1">
-                              <template v-slot:prepend>
-                                <v-icon icon="mdi-checkbox-marked-circle-outline" size="small" color="primary" class="mr-2"></v-icon>
-                              </template>
-                              <v-list-item-title class="text-body-2">
-                                {{ threat }}
-                              </v-list-item-title>
-                            </v-list-item>
-                          </v-list>
-                        </v-card-text>
-                      </v-card>
-                    </v-expand-transition>
 
                     <v-btn color="primary" variant="elevated" size="large" block @click="resetScan" class="text-none rounded-lg py-3">
                       <v-icon icon="mdi-refresh" class="mr-2"></v-icon>
@@ -140,17 +109,6 @@
                       Descargar Informe PDF
                     </v-btn>
                   </div>
-
-                  <!-- Markdown Report Section -->
-                  <v-card v-if="dataReport" class="mt-6 rounded-xl overflow-hidden" elevation="5">
-                    <v-card-title class="bg-primary text-white py-4">
-                      <v-icon icon="mdi-text-box-search-outline" class="mr-2"></v-icon>
-                      Reporte Detallado del Análisis
-                    </v-card-title>
-                    <v-card-text class="pa-4">
-                      <MarkdownViewer :markdown="dataReport" />
-                    </v-card-text>
-                  </v-card>
 
                 </div>
                 
@@ -236,6 +194,15 @@
         </v-col>
       </v-row>
     </v-container>
+      <v-card v-if="dataReport" class="mt-6 rounded-xl overflow-hidden" elevation="5">
+        <v-card-title class="bg-primary text-white py-4">
+          <v-icon icon="mdi-text-box-search-outline" class="mr-2"></v-icon>
+          Reporte Detallado del Análisis
+        </v-card-title>
+        <v-card-text class="pa-4">
+          <MarkdownViewer :markdown="dataReport" />
+        </v-card-text>
+    </v-card>
   </v-app>
 </template>
 
@@ -248,7 +215,6 @@ const url = ref('');
 const urlError = ref('');
 const isScanning = ref(false);
 const scanComplete = ref(false);
-const threatLevel = ref(0);
 const dataReport = ref('');
 const pdfBase64 = ref('');
 const errorMessage = ref('');
@@ -268,28 +234,6 @@ const scanFeatures = [
   'Seguridad DNS',
   'Reputación del dominio',
 ];
-
-const threatColors = [
-  { color: 'success', icon: 'mdi-check-circle', text: 'URL segura' },
-  { color: 'warning', icon: 'mdi-alert-circle', text: 'URL potencialmente peligrosa' },
-  { color: 'error', icon: 'mdi-alert', text: 'URL maliciosa detectada' },
-];
-
-const threatDetails = {
-  1: [
-    'Posible redirección sospechosa',
-    'Certificado SSL con problemas menores',
-    'El sitio utiliza técnicas de seguimiento invasivas',
-    'Baja reputación del dominio'
-  ],
-  2: [
-    'Intento de phishing detectado',
-    'Se detectó código malicioso en la página',
-    'El sitio intenta descargar software malicioso',
-    'Dominio vinculado a actividades fraudulentas',
-    'Riesgo elevado de robo de información'
-  ]
-};
 
 const canScan = computed(() => {
   return url.value && !urlError.value && !isScanning.value;
@@ -314,19 +258,6 @@ const validateUrl = () => {
   } else {
     urlError.value = '';
   }
-};
-
-const determineThreatLevel = (response) => {
-  if (response.risk_score !== undefined) {
-    if (response.risk_score > 70) return 2;
-    if (response.risk_score > 30) return 1;
-    return 0;
-  }
-  
-  // Si no hay risk_score, intentar determinar por otro campo o por defecto nivel medio
-  if (response.status === 'safe') return 0;
-  if (response.status === 'malicious') return 2;
-  return 1; // Por defecto nivel medio si no podemos determinar
 };
 
 const startScan = async () => {
@@ -362,8 +293,6 @@ const startScan = async () => {
       if (response.data.pdf_base64) {
         pdfBase64.value = response.data.pdf_base64;
       }
-      
-      threatLevel.value = determineThreatLevel(response.data);
       
       scanComplete.value = true;
     } else {
@@ -418,7 +347,6 @@ const resetScan = () => {
   dataReport.value = '';
   pdfBase64.value = ''; 
   scanComplete.value = false;
-  threatLevel.value = 0;
   errorMessage.value = '';
   isScanning.value = false;
 };
