@@ -126,14 +126,42 @@
                       <v-icon icon="mdi-refresh" class="mr-2"></v-icon>
                       Escanear otra URL
                     </v-btn>
-                    
+
+                     <!-- Download PDF Button (New) -->
+                     <v-btn 
+                      v-if="pdfBase64"
+                      color="accent" 
+                      variant="elevated" 
+                      size="large" 
+                      block 
+                      @click="downloadPdf" 
+                      class="text-none rounded-lg py-3"
+                    >
+                      <v-icon icon="mdi-file-pdf-box" class="mr-2"></v-icon>
+                      Descargar Informe PDF
+                    </v-btn>
+
+                    <!--
                     <v-btn color="surface-variant" variant="text" size="small" block class="mt-4">
                       <v-icon icon="mdi-download" size="small" class="mr-1"></v-icon>
                       Descargar informe
-                    </v-btn>
+                    </v-btn> -->
                   </div>
-                </div>
 
+                    <!-- Markdown Report Section (New) -->
+                  <v-card v-if="dataReport" class="mt-6 rounded-xl overflow-hidden" elevation="5">
+                    <v-card-title class="bg-primary text-white py-4">
+                      <v-icon icon="mdi-text-box-search-outline" class="mr-2"></v-icon>
+                      Reporte Detallado del Análisis
+                    </v-card-title>
+                    <v-card-text class="pa-4">
+                      <MarkdownViewer :markdown="dataReport" />
+                    </v-card-text>
+                  </v-card>
+
+                </div>
+                
+                <!-- Scan Input Section -->
                 <div v-else>
                   <div class="text-h5 font-weight-bold text-white mb-6">
                     Escaneo de URL
@@ -159,15 +187,16 @@
                     placeholder="https://ejemplo.com"
                     variant="outlined"
                     density="comfortable"
-                    bg-color="primary-darken-2"
+                    bg-color="white"
                     color="primary"
                     class="rounded-lg mb-2"
-                    hide-details
-                    prepend-inner-icon="mdi-link"
-                    :error-messages="urlError"
+                    :error-messages="urlError ? [urlError] : []"
                     @input="validateUrl"
+                    @keyup.enter="startScan"
                     autocomplete="off"
                     :disabled="isScanning"
+                    hide-details="auto"
+                    prepend-inner-icon="mdi-link"
                   ></v-text-field>
                   
                   <div class="text-caption text-blue-lighten-4 mb-6">
@@ -229,9 +258,14 @@
 </template>
 
 <script setup>
+import axiosInstance from '@/services/axiosInstance';
 import { ref, computed } from 'vue';
 import MarkdownViewer from '@/components/MarkdownViewer.vue';
+<<<<<<< HEAD
 import axiosInstance from '@/services/axiosInstance';
+=======
+import axios from 'axios';
+>>>>>>> main
 
 const url = ref('');
 const urlError = ref('');
@@ -239,6 +273,10 @@ const isScanning = ref(false);
 const scanComplete = ref(false);
 const threatLevel = ref(0);
 const dataReport = ref('');
+<<<<<<< HEAD
+=======
+const pdfBase64 = ref('');
+>>>>>>> main
 
 const features = [
   { icon: 'mdi-web-check', text: 'Detección avanzada de phishing y estafas' },
@@ -279,7 +317,7 @@ const threatDetails = {
 };
 
 const canScan = computed(() => {
-  return url.value && !urlError.value;
+  return url.value && !urlError.value && !isScanning.value;
 });
 
 const validateUrl = () => {
@@ -342,18 +380,102 @@ const startScan = async () => {
   } finally {
     isScanning.value = false;
   }
+}
+// decode base64 and trigger download
+const downloadPdf = () => {
+  if (!pdfBase64.value) return;
+  try {
+    // decode Base64
+    const byteCharacters = atob(pdfBase64.value);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+
+    // create Blob
+    const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+    // create download link
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'advanced_report.pdf';
+
+    // trigger download
+    document.body.appendChild(link);
+    link.click();
+
+    // clean up
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+
+  } catch (error) {
+    console.error("Error downlaoding PDF:", error);
+  }
 };
 
+const startScan = async () => {
+  if (!canScan.value) return ;
+
+  isScanning.value = true;
+  urlError.value = '';
+  dataReport.value = '';
+  pdfBase64.value = '';
+  scanComplete.value = false;
+
+  try {
+    validateUrl();
+    if (urlError.value){
+      throw new Error ('URL inválida.');
+    }
+
+    const response = await axiosInstance.post('advanced-analysis', {
+      value: url.value
+    });
+
+    console.log("Analysis response:", response.data);
+
+    if (response.data) {
+      dataReport.value = response.data.report;
+      pdfBase64.value = response.data.pdf_base64;
+
+      scanComplete.value = true;
+    } else {
+      throw new Error('Respuesta de análisis inválida o vacía.');
+    }
+
+  } catch (error) {
+    console.error("Error en el escaneo:", error);
+    scanComplete.value = false;
+  } finally {
+    isScanning.value = false;
+  }
+};
+
+
 const resetScan = () => {
+  url.value = '';
+  urlError.value = ''; 
+  dataReport.value = '';
+  pdfBase64.value = ''; 
   scanComplete.value = false;
   threatLevel.value = 0;
+<<<<<<< HEAD
   url.value = '';
   urlError.value = '';
   dataReport.value = '';
+=======
+  isScanning.value = false; 
+>>>>>>> main
 };
+
 </script>
 
 <style>
+.bg-primary {
+  background-color: #1976D2 !important;
+}
+
 .bg-gradient {
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
 }
