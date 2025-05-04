@@ -127,7 +127,6 @@
                       Escanear otra URL
                     </v-btn>
 
-                     <!-- Download PDF Button (New) -->
                      <v-btn 
                       v-if="pdfBase64"
                       color="accent" 
@@ -135,20 +134,14 @@
                       size="large" 
                       block 
                       @click="downloadPdf" 
-                      class="text-none rounded-lg py-3"
+                      class="text-none rounded-lg py-3 mt-4"
                     >
                       <v-icon icon="mdi-file-pdf-box" class="mr-2"></v-icon>
                       Descargar Informe PDF
                     </v-btn>
-
-                    <!--
-                    <v-btn color="surface-variant" variant="text" size="small" block class="mt-4">
-                      <v-icon icon="mdi-download" size="small" class="mr-1"></v-icon>
-                      Descargar informe
-                    </v-btn> -->
                   </div>
 
-                    <!-- Markdown Report Section (New) -->
+                  <!-- Markdown Report Section -->
                   <v-card v-if="dataReport" class="mt-6 rounded-xl overflow-hidden" elevation="5">
                     <v-card-title class="bg-primary text-white py-4">
                       <v-icon icon="mdi-text-box-search-outline" class="mr-2"></v-icon>
@@ -244,25 +237,12 @@
       </v-row>
     </v-container>
   </v-app>
-  <v-container v-if="dataReport" class="mt-6">
-      <v-card class="rounded-xl overflow-hidden" elevation="5">
-        <v-card-title class="bg-primary text-white py-4">
-          <v-icon icon="mdi-file-document-outline" class="mr-2"></v-icon>
-          Reporte de Análisis de Seguridad
-        </v-card-title>
-        <v-card-text class="pa-4">
-          <MarkdownViewer :markdown="dataReport" />
-        </v-card-text>
-      </v-card>
-    </v-container>
 </template>
 
 <script setup>
 import axiosInstance from '@/services/axiosInstance';
 import { ref, computed } from 'vue';
 import MarkdownViewer from '@/components/MarkdownViewer.vue';
-import axiosInstance from '@/services/axiosInstance';
-import axios from 'axios';
 
 const url = ref('');
 const urlError = ref('');
@@ -271,6 +251,7 @@ const scanComplete = ref(false);
 const threatLevel = ref(0);
 const dataReport = ref('');
 const pdfBase64 = ref('');
+const errorMessage = ref('');
 
 const features = [
   { icon: 'mdi-web-check', text: 'Detección avanzada de phishing y estafas' },
@@ -335,34 +316,61 @@ const validateUrl = () => {
   }
 };
 
+const determineThreatLevel = (response) => {
+  if (response.risk_score !== undefined) {
+    if (response.risk_score > 70) return 2;
+    if (response.risk_score > 30) return 1;
+    return 0;
+  }
+  
+  // Si no hay risk_score, intentar determinar por otro campo o por defecto nivel medio
+  if (response.status === 'safe') return 0;
+  if (response.status === 'malicious') return 2;
+  return 1; // Por defecto nivel medio si no podemos determinar
+};
+
 const startScan = async () => {
+  if (!canScan.value) return;
+
   isScanning.value = true;
-  errorMessage.value = ''; // Limpiar mensajes de error anteriores
+  urlError.value = '';
+  errorMessage.value = '';
+  dataReport.value = '';
+  pdfBase64.value = '';
+  scanComplete.value = false;
 
   try {
-    if (!url.value || !url.value.trim()) {
-      errorMessage.value = 'Por favor, ingresa una URL válida';
-      return;
+    validateUrl();
+    if (urlError.value) {
+      throw new Error('URL inválida.');
     }
 
     const payload = {
       type: 'url',
       value: url.value.trim()
     };
-    console.log('Enviando payload:', payload);
     
     const response = await axiosInstance.post('/advanced-analysis', payload);
-    console.log('Respuesta del escaneo:', response.data);
     
-    if (response.data?.openai_response) {
-      dataReport.value = response.data.openai_response;
+    if (response.data) {
+      if (response.data.openai_response) {
+        dataReport.value = response.data.openai_response;
+      } else if (response.data.report) {
+        dataReport.value = response.data.report;
+      }
+      
+      if (response.data.pdf_base64) {
+        pdfBase64.value = response.data.pdf_base64;
+      }
+      
       threatLevel.value = determineThreatLevel(response.data);
+      
       scanComplete.value = true;
     } else {
-      throw new Error('Respuesta de análisis inválida.');
+      throw new Error('Respuesta de análisis inválida o vacía.');
     }
   } catch (error) {
-    console.error('Error en el escaneo avanzado:', error);
+    console.error('Error en el escaneo:', error);
     
     if (error.response) {
       errorMessage.value = `Error del servidor: ${error.response.status} - ${error.response.data?.detail || 'Error desconocido'}`;
@@ -371,15 +379,16 @@ const startScan = async () => {
     } else {
       errorMessage.value = `Error: ${error.message}`;
     }
+    
+    scanComplete.value = false;
   } finally {
     isScanning.value = false;
   }
-}
-// decode base64 and trigger download
+};
+
 const downloadPdf = () => {
   if (!pdfBase64.value) return;
   try {
-    // decode Base64
     const byteCharacters = atob(pdfBase64.value);
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
@@ -387,65 +396,21 @@ const downloadPdf = () => {
     }
     const byteArray = new Uint8Array(byteNumbers);
 
-    // create Blob
     const blob = new Blob([byteArray], { type: 'application/pdf' });
 
-    // create download link
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = 'advanced_report.pdf';
 
-    // trigger download
     document.body.appendChild(link);
     link.click();
 
-    // clean up
     document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
-
   } catch (error) {
-    console.error("Error downlaoding PDF:", error);
+    console.error("Error al descargar PDF:", error);
   }
 };
-
-const startScan1 = async () => {
-  if (!canScan.value) return ;
-
-  isScanning.value = true;
-  urlError.value = '';
-  dataReport.value = '';
-  pdfBase64.value = '';
-  scanComplete.value = false;
-
-  try {
-    validateUrl();
-    if (urlError.value){
-      throw new Error ('URL inválida.');
-    }
-
-    const response = await axiosInstance.post('advanced-analysis', {
-      value: url.value
-    });
-
-    console.log("Analysis response:", response.data);
-
-    if (response.data) {
-      dataReport.value = response.data.report;
-      pdfBase64.value = response.data.pdf_base64;
-
-      scanComplete.value = true;
-    } else {
-      throw new Error('Respuesta de análisis inválida o vacía.');
-    }
-
-  } catch (error) {
-    console.error("Error en el escaneo:", error);
-    scanComplete.value = false;
-  } finally {
-    isScanning.value = false;
-  }
-};
-
 
 const resetScan = () => {
   url.value = '';
@@ -454,12 +419,9 @@ const resetScan = () => {
   pdfBase64.value = ''; 
   scanComplete.value = false;
   threatLevel.value = 0;
-  url.value = '';
-  urlError.value = '';
-  dataReport.value = '';
-  isScanning.value = false; 
+  errorMessage.value = '';
+  isScanning.value = false;
 };
-
 </script>
 
 <style>

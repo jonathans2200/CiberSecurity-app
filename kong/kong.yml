@@ -8,13 +8,13 @@ services:
         paths:
           - /api                         # proxy anything under /api
         strip_path: true
-        methods: [ GET, POST, PUT, DELETE ]
+        methods: [ GET, POST, PUT, DELETE, OPTIONS ]
         protocols: [ http, https ]
 
 plugins:
   - name: cors
     config:
       origins: ["*"]
-      methods: ["GET","POST","PUT","DELETE"]
-      headers: ["Content-Type"]
-      credentials: false
+      methods: ["GET","POST","PUT","DELETE" , "OPTIONS"]
+      headers: ["Content-Type", "Authorization", "Accept"]  
+      credentials: true

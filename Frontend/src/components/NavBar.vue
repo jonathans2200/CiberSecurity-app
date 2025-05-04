@@ -22,7 +22,7 @@
             <li v-if="isAuthenticated" class="nav-item">
               <router-link to="/analisis" class="nav-link">Análisis</router-link>
             </li>
-            <li v-if="isAuthenticated && currentRole === 'UserPremium'" class="nav-item">
+            <li v-if="isAuthenticated && currentRole?.includes('UserPremium')" class="nav-item">
               <router-link to="/advancedAnalysis" class="nav-link">Análisis Avanzado</router-link>
             </li>
           </ul>
@@ -106,7 +106,6 @@ import { useAuth0 } from '@auth0/auth0-vue';
 const auth0 = useAuth0();
 
 const isMenuOpen = ref(false);
-const userRoles = ref<string[]>([]);
 const currentRole = ref<string | null>(null);
 
 const parseJwt = (token: string): Record<string, any> => {
@@ -133,10 +132,8 @@ const fetchUserRoles = async () => {
 
     const roles = tokenPayload.roles || tokenPayload['https://securityApp.com/roles'] || [];
 
-    userRoles.value = roles;
-    currentRole.value = roles.length > 0 ? roles[0] : null;
+    currentRole.value = roles
 
-    console.log("Roles del usuario:", userRoles.value);
     console.log("Rol actual del usuario:", currentRole.value);
   } catch (err) {
     console.error("Error al obtener el ID token:", err);
