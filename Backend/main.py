@@ -65,8 +65,8 @@ def get_logs(
 async def analyze(
   type:Optional[str],
   value:Optional[str]=Query(None, description="IP o URL a analizar"),
-  file: Optional[UploadFile] = File(None)#,
-  #user= require_roles("SecurityOps")
+  file: Optional[UploadFile] = File(None),
+  user= require_roles("SecurityOps")
 ):
     vt_response = None
 
