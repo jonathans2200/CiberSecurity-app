@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-mcp
+  namespace: app-virustotal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-mcp
+  template:
+    metadata:
+      labels:
+        app: db-mcp
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-db-secret
+                  key: MCP_POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-db-secret
+                  key: MCP_POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-db-secret
+                  key: MCP_POSTGRES_PASSWORD
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: db-mcp-storage
+            - mountPath: /docker-entrypoint-initdb.d/init.sql
+              name: init-sql
+              subPath: init.sql
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      volumes:
+        - name: db-mcp-storage
+          persistentVolumeClaim:
+            claimName: db-mcp-pvc
+        - name: init-sql
+          configMap:
+            name: db-mcp-init-sql
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-mcp
+  namespace: app-virustotal
+spec:
+  selector:
+    app: db-mcp
+  ports:
+    - port: 5432
+      targetPort: 5432

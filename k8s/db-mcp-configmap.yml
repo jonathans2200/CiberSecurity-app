@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-mcp-init-sql
+  namespace: app-virustotal
+data:
+  init.sql: |
+    CREATE TABLE IF NOT EXISTS threats (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      type VARCHAR(100) NOT NULL,
+      detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE TABLE IF NOT EXISTS scans (
+      id SERIAL PRIMARY KEY,
+      target VARCHAR(255) NOT NULL,
+      scan_type VARCHAR(100) NOT NULL,
+      status VARCHAR(50) NOT NULL,
+      results JSONB,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE INDEX IF NOT EXISTS idx_scans_target ON scans(target);
+    CREATE INDEX IF NOT EXISTS idx_scans_status ON scans(status);
