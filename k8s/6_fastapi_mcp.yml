@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi-mcp
+  namespace: app-virustotal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fastapi-mcp
+  template:
+    metadata:
+      labels:
+        app: fastapi-mcp
+    spec:
+      containers:
+        - name: fastapi
+          stdin: true
+          tty: true
+          image: localhost:5000/fastapi-mcp:debug
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-db-secret
+                  key: OPENAI_API_KEY
+            - name: VT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-db-secret
+                  key: VT_API_KEY
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-db-secret
+                  key: DATABASE_URL
+            - name: MCP_SERVER_CMD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-db-secret
+                  key: MCP_SERVER_CMD
+            - name: WHOIS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-db-secret
+                  key: WHOIS_API_KEY
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: log-volume
+              mountPath: /var/log/app
+      volumes:
+        - name: log-volume
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fastapi-mcp
+  namespace: app-virustotal
+spec:
+  selector:
+    app: fastapi-mcp
+  ports:
+    - port: 8000
+      targetPort: 8000
+      nodePort: 30002
+  type: NodePort

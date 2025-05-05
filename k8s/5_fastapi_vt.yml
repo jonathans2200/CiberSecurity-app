@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi-vt
+  namespace: app-virustotal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fastapi-vt
+  template:
+    metadata:
+      labels:
+        app: fastapi-vt
+    spec:
+      containers:
+        - name: fastapi
+          image: fastapi-vt:latest
+          imagePullPolicy: Never 
+          ports:
+            - containerPort: 8000
+          env:
+            - name: OPENAI_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-db-secret
+                  key: OPENAI_KEY
+            - name: VT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-db-secret
+                  key: VT_KEY
+            - name: DATABASE_URL_API
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-db-secret
+                  key: DATABASE_URL_API
+            - name: AUTH0_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-db-secret
+                  key: AUTH0_CLIENT_ID
+            - name: AUTH0_DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-db-secret
+                  key: AUTH0_DOMAIN
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fastapi-vt
+  namespace: app-virustotal
+spec:
+  selector:
+    app: fastapi-vt
+  ports:
+    - port: 8000
+      targetPort: 8000
+      nodePort: 30001
+  type: NodePort
